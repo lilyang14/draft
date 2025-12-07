@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UI设计作品集</title>
     
-    <!-- 完整的Favicon配置 -->
+    <!-- Favicon配置 -->
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="manifest" href="site.webmanifest">
-    <meta name="msapplication-TileColor" content="#1C1C1C">
-    <meta name="theme-color" content="#1C1C1C">
     
     <style>
         * {
@@ -44,63 +42,85 @@
         
         .portfolio-item {
             width: 100%;
+            margin-bottom: 0;
+            position: relative;
+            overflow: hidden;
         }
         
         .portfolio-item img {
             width: 100%;
             display: block;
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
         
-        .loading {
-            position: fixed;
+        .portfolio-item img.loaded {
+            opacity: 1;
+        }
+        
+        /* 骨架屏样式 */
+        .skeleton {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background-color: #1C1C1C;
+            height: 1080px;
+            background: rgba(255, 255, 255, 0.2);
             display: flex;
-            justify-content: center;
             align-items: center;
-            z-index: 9999;
+            justify-content: center;
+            color: #666;
+            font-size: 16px;
+            animation: pulse 2s infinite;
         }
         
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(51, 106, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #336AFF;
-            animation: spin 1s ease-in-out infinite;
+        .skeleton.error {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff6b6b;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0.6; }
         }
         
-        .error-message {
+        /* 网络异常提示样式 */
+        .network-error {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #FFFFFF;
+            background-color: #000000;
             justify-content: center;
             align-items: center;
             flex-direction: column;
             z-index: 9999;
+            text-align: center;
         }
         
         .error-text {
-            color: #565D66;
-            font-size: 18px;
-            margin-bottom: 10px;
+            color: #ffffff;
+            font-size: 14px;
+            margin-bottom: 20px;
         }
         
         .retry-btn {
-            color: #336AFF;
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 96px;
+            height: 36px;
+            font-size: 14px;
             cursor: pointer;
-            text-decoration: underline;
+            border-radius: 2px;
+            transition: background-color 0.3s;
+        }
+        
+        .retry-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
         }
         
         @media (min-width: 768px) {
@@ -111,23 +131,19 @@
     </style>
 </head>
 <body>
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-    </div>
-    
-    <div class="error-message" id="errorMessage">
-        <div class="error-text">加载失败 - 请检查图片路径</div>
-        <div class="retry-btn" id="retryBtn">重试</div>
+    <div class="network-error" id="networkError">
+        <div class="error-text">网络异常，请重新加载</div>
+        <button class="retry-btn" id="retryBtn">重新加载</button>
     </div>
     
     <div class="container">
         <div class="portfolio" id="portfolio">
-            <!-- 图片将在这里显示 -->
+            <!-- 骨架屏和图片将在这里显示 -->
         </div>
     </div>
 
     <script>
-        // 请修改为您的实际图片文件名
+        // 图片配置
         const imagePaths = [
             'images/work1.png',
             'images/work2.png',
@@ -139,95 +155,154 @@
             'images/work8.png'
         ];
         
-        const loadingElement = document.getElementById('loading');
-        const errorMessageElement = document.getElementById('errorMessage');
+        // 获取DOM元素
+        const networkErrorElement = document.getElementById('networkError');
         const portfolioElement = document.getElementById('portfolio');
         const retryBtn = document.getElementById('retryBtn');
         
-        function loadImages() {
-            let loadedCount = 0;
+        // 配置选项
+        const config = {
+            loadDelay: 500,        // 图片加载间隔(毫秒)
+            skeletonHeight: 1080   // 骨架屏高度
+        };
+        
+        // 创建骨架屏占位符
+        function createSkeletons() {
+            portfolioElement.innerHTML = ''; // 清空现有内容
+            
+            imagePaths.forEach((path, index) => {
+                const portfolioItem = document.createElement('div');
+                portfolioItem.className = 'portfolio-item';
+                portfolioItem.id = `item-${index}`;
+                
+                // 创建图片元素（初始隐藏）
+                const img = document.createElement('img');
+                img.src = path;
+                img.alt = `UI设计作品 ${index + 1}`;
+                img.dataset.index = index;
+                
+                // 创建骨架屏
+                const skeleton = document.createElement('div');
+                skeleton.className = 'skeleton';
+                skeleton.id = `skeleton-${index}`;
+                skeleton.textContent = `加载中... (${index + 1}/${imagePaths.length})`;
+                
+                portfolioItem.appendChild(img);
+                portfolioItem.appendChild(skeleton);
+                portfolioElement.appendChild(portfolioItem);
+            });
+        }
+        
+        // 图片加载函数 - 实现逐张加载
+        function loadImagesSequentially() {
             const totalImages = imagePaths.length;
-            let hasError = false;
             
             if (totalImages === 0) {
                 showError('没有配置图片路径');
                 return;
             }
             
-            // 设置超时，防止无限加载
-            const timeoutId = setTimeout(() => {
-                if (loadedCount < totalImages && !hasError) {
-                    showError('图片加载超时，请检查网络连接');
-                }
-            }, 10000);
+            // 先创建骨架屏占位符
+            createSkeletons();
             
-            imagePaths.forEach((path, index) => {
-                const img = new Image();
-                img.onload = () => {
-                    loadedCount++;
-                    console.log(`图片 ${index + 1} 加载成功: ${path}`);
-                    
-                    if (loadedCount === totalImages) {
-                        clearTimeout(timeoutId);
-                        setTimeout(() => {
-                            loadingElement.style.display = 'none';
-                            addImagesToPortfolio();
-                        }, 500);
-                    }
-                };
-                
-                img.onerror = () => {
-                    console.error(`图片加载失败: ${path}`);
-                    hasError = true;
-                    clearTimeout(timeoutId);
-                    showError(`图片加载失败: ${path}`);
-                };
-                
-                img.src = path;
-            });
+            // 开始逐张加载图片
+            loadNextImage(0, totalImages);
         }
         
-        function showError(message) {
-            loadingElement.style.display = 'none';
-            if (message) {
-                errorMessageElement.querySelector('.error-text').textContent = message;
+        // 递归函数：逐张加载图片
+        function loadNextImage(currentIndex, totalImages) {
+            if (currentIndex >= totalImages) {
+                // 所有图片加载完成
+                console.log('所有图片加载完成');
+                return;
             }
-            errorMessageElement.style.display = 'flex';
+            
+            const path = imagePaths[currentIndex];
+            const imgElement = document.querySelector(`#item-${currentIndex} img`);
+            const skeletonElement = document.getElementById(`skeleton-${currentIndex}`);
+            
+            // 创建新的Image对象进行预加载
+            const img = new Image();
+            
+            img.onload = () => {
+                console.log(`图片 ${currentIndex + 1} 加载成功: ${path}`);
+                
+                // 图片加载完成后，隐藏骨架屏，显示图片
+                setTimeout(() => {
+                    if (skeletonElement) {
+                        skeletonElement.style.display = 'none';
+                    }
+                    
+                    imgElement.classList.add('loaded');
+                    
+                    // 加载下一张图片
+                    setTimeout(() => {
+                        loadNextImage(currentIndex + 1, totalImages);
+                    }, config.loadDelay);
+                }, 300);
+            };
+            
+            img.onerror = () => {
+                console.error(`图片加载失败: ${path}`);
+                
+                // 标记加载失败，但继续加载其他图片
+                if (skeletonElement) {
+                    skeletonElement.textContent = '加载失败';
+                    skeletonElement.classList.add('error');
+                }
+                
+                // 继续加载下一张图片
+                setTimeout(() => {
+                    loadNextImage(currentIndex + 1, totalImages);
+                }, config.loadDelay);
+            };
+            
+            // 开始加载图片
+            img.src = path;
         }
         
-        function addImagesToPortfolio() {
-            imagePaths.forEach(path => {
-                const portfolioItem = document.createElement('div');
-                portfolioItem.className = 'portfolio-item';
-                
-                const img = document.createElement('img');
-                img.src = path;
-                img.alt = 'UI设计作品';
-                
-                portfolioItem.appendChild(img);
-                portfolioElement.appendChild(portfolioItem);
-            });
+        // 显示网络错误
+        function showNetworkError() {
+            networkErrorElement.style.display = 'flex';
         }
         
+        // 隐藏网络错误
+        function hideNetworkError() {
+            networkErrorElement.style.display = 'none';
+        }
+        
+        // 重试按钮事件
         retryBtn.addEventListener('click', () => {
-            errorMessageElement.style.display = 'none';
-            loadingElement.style.display = 'flex';
+            hideNetworkError();
             portfolioElement.innerHTML = '';
-            loadImages();
+            
+            // 延迟一下再开始加载，让用户看到变化
+            setTimeout(() => {
+                loadImagesSequentially();
+            }, 500);
         });
         
         // 添加网络状态检测
         window.addEventListener('online', () => {
             console.log('网络连接恢复');
+            hideNetworkError();
         });
         
         window.addEventListener('offline', () => {
             console.log('网络连接断开');
-            showError('网络连接已断开，请检查网络设置');
+            showNetworkError();
         });
         
         // 页面加载完成后开始加载图片
-        window.addEventListener('DOMContentLoaded', loadImages);
+        window.addEventListener('DOMContentLoaded', () => {
+            // 检查网络状态
+            if (!navigator.onLine) {
+                showNetworkError();
+            } else {
+                // 直接开始加载图片，显示骨架屏
+                loadImagesSequentially();
+            }
+        });
     </script>
 </body>
 </html>
