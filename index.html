@@ -6,10 +6,10 @@
     <title>UI设计作品集</title>
     
     <!-- Favicon配置 -->
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="manifest" href="site.webmanifest">
     
     <style>
@@ -58,129 +58,31 @@
             opacity: 1;
         }
         
-        /* 增强的骨架屏样式 */
+        /* 骨架屏样式 */
         .skeleton {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 1080px;
-            background: linear-gradient(
-                90deg,
-                rgba(255, 255, 255, 0.1) 0%,
-                rgba(255, 255, 255, 0.2) 50%,
-                rgba(255, 255, 255, 0.1) 100%
-            );
+            background: rgba(255, 255, 255, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #666;
             font-size: 16px;
-            animation: shimmer 2s infinite, pulse 3s infinite, fadeWave 4s infinite;
-            background-size: 200% 100%;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        /* 微光闪烁效果 */
-        @keyframes shimmer {
-            0% {
-                background-position: -200% 0;
-            }
-            100% {
-                background-position: 200% 0;
-            }
-        }
-        
-        /* 呼吸脉冲效果 */
-        @keyframes pulse {
-            0%, 100% { 
-                opacity: 0.6;
-                transform: scale(1);
-            }
-            25% {
-                opacity: 0.8;
-                transform: scale(1.002);
-            }
-            50% { 
-                opacity: 0.7;
-                transform: scale(1);
-            }
-            75% {
-                opacity: 0.9;
-                transform: scale(1.001);
-            }
-        }
-        
-        /* 淡入淡出波浪效果 */
-        @keyframes fadeWave {
-            0%, 100% {
-                background: linear-gradient(
-                    90deg,
-                    rgba(255, 255, 255, 0.1) 0%,
-                    rgba(255, 255, 255, 0.2) 50%,
-                    rgba(255, 255, 255, 0.1) 100%
-                );
-            }
-            33% {
-                background: linear-gradient(
-                    90deg,
-                    rgba(255, 255, 255, 0.15) 0%,
-                    rgba(255, 255, 255, 0.25) 50%,
-                    rgba(255, 255, 255, 0.15) 100%
-                );
-            }
-            66% {
-                background: linear-gradient(
-                    90deg,
-                    rgba(255, 255, 255, 0.12) 0%,
-                    rgba(255, 255, 255, 0.22) 50%,
-                    rgba(255, 255, 255, 0.12) 100%
-                );
-            }
-        }
-        
-        /* 添加光晕效果 */
-        .skeleton::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.3),
-                transparent
-            );
-            animation: shine 3s infinite;
-        }
-        
-        @keyframes shine {
-            0% {
-                left: -100%;
-            }
-            100% {
-                left: 200%;
-            }
+            animation: pulse 2s infinite;
         }
         
         .skeleton.error {
             background: rgba(255, 0, 0, 0.2);
             color: #ff6b6b;
-            animation: errorPulse 1.5s infinite;
         }
         
-        @keyframes errorPulse {
-            0%, 100% { 
-                background-color: rgba(255, 0, 0, 0.2);
-                opacity: 0.8;
-            }
-            50% { 
-                background-color: rgba(255, 0, 0, 0.3);
-                opacity: 1;
-            }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0.6; }
         }
         
         /* 网络异常提示样式 */
@@ -235,209 +137,143 @@
     </div>
     
     <div class="container">
-        <div class="portfolio" id="portfolio"></div>
+        <div class="portfolio" id="portfolio">
+            <!-- 图片将在这里显示 -->
+        </div>
     </div>
 
     <script>
-        // 配置常量
-        const CONFIG = {
-            imagePaths: [
-                'images/work1.png',
-                'images/work2.png',
-                'images/work3.png',
-                'images/work4.png',
-                'images/work5.png',
-                'images/work6.png',
-                'images/work7.png',
-                'images/work8.png'
-            ],
-            skeletonHeight: 1080
-        };
-
-        // DOM元素缓存
-        const elements = {
-            networkError: document.getElementById('networkError'),
-            portfolio: document.getElementById('portfolio'),
-            retryBtn: document.getElementById('retryBtn')
-        };
-
-        // 工具函数
-        const utils = {
-            // 显示/隐藏网络错误
-            toggleNetworkError: (show = true) => {
-                elements.networkError.style.display = show ? 'flex' : 'none';
-            },
+        // 图片配置
+        const imagePaths = [
+            'images/work1.png',
+            'images/work2.png',
+            'images/work3.png',
+            'images/work4.png',
+            'images/work5.png',
+            'images/work6.png',
+            'images/work7.png',
+            'images/work8.png'
+        ];
+        
+        // 获取DOM元素
+        const networkErrorElement = document.getElementById('networkError');
+        const portfolioElement = document.getElementById('portfolio');
+        const retryBtn = document.getElementById('retryBtn');
+        
+        // 创建骨架屏占位符
+        function createSkeletons() {
+            portfolioElement.innerHTML = ''; // 清空现有内容
             
-            // 创建DOM元素
-            createElement: (tag, className, content) => {
-                const element = document.createElement(tag);
-                if (className) element.className = className;
-                if (content) element.textContent = content;
-                return element;
-            },
-            
-            // 随机延迟函数，增强动效的自然感
-            randomDelay: (min = 0, max = 300) => {
-                return Math.floor(Math.random() * (max - min + 1)) + min;
-            }
-        };
-
-        // 图片加载器
-        const imageLoader = {
-            loadedCount: 0,
-            
-            // 创建骨架屏和图片容器
-            createPortfolioItems: () => {
-                elements.portfolio.innerHTML = '';
+            imagePaths.forEach((path, index) => {
+                const portfolioItem = document.createElement('div');
+                portfolioItem.className = 'portfolio-item';
+                portfolioItem.id = `item-${index}`;
                 
-                CONFIG.imagePaths.forEach((path, index) => {
-                    const portfolioItem = utils.createElement('div', 'portfolio-item', null);
-                    portfolioItem.id = `item-${index}`;
-                    
-                    const img = utils.createElement('img', null, null);
-                    img.src = path;
-                    img.alt = `UI设计作品 ${index + 1}`;
-                    img.dataset.index = index;
-                    
-                    const skeleton = utils.createElement('div', 'skeleton', 
-                        `加载中... (${index + 1}/${CONFIG.imagePaths.length})`);
-                    skeleton.id = `skeleton-${index}`;
-                    
-                    portfolioItem.appendChild(img);
-                    portfolioItem.appendChild(skeleton);
-                    elements.portfolio.appendChild(portfolioItem);
-                });
-            },
+                // 创建图片元素（初始隐藏）
+                const img = document.createElement('img');
+                img.src = path;
+                img.alt = `UI设计作品 ${index + 1}`;
+                img.dataset.index = index;
+                
+                // 创建骨架屏
+                const skeleton = document.createElement('div');
+                skeleton.className = 'skeleton';
+                skeleton.id = `skeleton-${index}`;
+                skeleton.textContent = `加载中... (${index + 1}/${imagePaths.length})`;
+                
+                portfolioItem.appendChild(img);
+                portfolioItem.appendChild(skeleton);
+                portfolioElement.appendChild(portfolioItem);
+            });
+        }
+        
+        // 并行加载所有图片
+        function loadImagesInParallel() {
+            const totalImages = imagePaths.length;
+            let loadedCount = 0;
             
-            // 加载单个图片
-            loadSingleImage: (path, index) => {
-                return new Promise((resolve, reject) => {
-                    const imgElement = document.querySelector(`#item-${index} img`);
-                    const skeletonElement = document.getElementById(`skeleton-${index}`);
+            if (totalImages === 0) {
+                showError('没有配置图片路径');
+                return;
+            }
+            
+            // 创建骨架屏占位符
+            createSkeletons();
+            
+            imagePaths.forEach((path, index) => {
+                const imgElement = document.querySelector(`#item-${index} img`);
+                const skeletonElement = document.getElementById(`skeleton-${index}`);
+                
+                const img = new Image();
+                
+                img.onload = () => {
+                    loadedCount++;
+                    console.log(`图片 ${index + 1} 加载成功: ${path}`);
                     
-                    const img = new Image();
-                    
-                    img.onload = () => {
-                        this.loadedCount++;
-                        console.log(`图片 ${index + 1} 加载成功: ${path}`);
-                        
-                        // 使用随机延迟增强动效的自然感
-                        const delay = utils.randomDelay(200, 600);
-                        setTimeout(() => {
-                            if (skeletonElement) {
-                                // 添加淡出动画
-                                skeletonElement.style.opacity = '0';
-                                skeletonElement.style.transition = 'opacity 0.5s ease';
-                                
-                                setTimeout(() => {
-                                    skeletonElement.style.display = 'none';
-                                }, 500);
-                            }
-                            imgElement.classList.add('loaded');
-                        }, delay);
-                        
-                        resolve(img);
-                    };
-                    
-                    img.onerror = () => {
-                        console.error(`图片加载失败: ${path}`);
+                    // 隐藏骨架屏，显示图片
+                    setTimeout(() => {
                         if (skeletonElement) {
-                            skeletonElement.textContent = '加载失败';
-                            skeletonElement.classList.add('error');
-                            
-                            // 错误状态下的特殊动效
-                            setTimeout(() => {
-                                skeletonElement.style.animation = 'errorPulse 1.5s infinite';
-                            }, 100);
+                            skeletonElement.style.display = 'none';
                         }
-                        reject(new Error(`图片加载失败: ${path}`));
-                    };
-                    
-                    // 添加加载超时处理
-                    const timeout = setTimeout(() => {
-                        if (!img.complete) {
-                            img.onerror(new Error('加载超时'));
-                        }
-                    }, 10000);
-                    
-                    img.onload = () => {
-                        clearTimeout(timeout);
-                        img.onload();
-                    };
-                    
-                    img.onerror = (err) => {
-                        clearTimeout(timeout);
-                        img.onerror(err);
-                    };
-                    
-                    img.src = path;
-                });
-            },
-            
-            // 并行加载所有图片
-            loadAllImages: async () => {
-                if (CONFIG.imagePaths.length === 0) {
-                    utils.toggleNetworkError(true);
-                    return;
-                }
+                        imgElement.classList.add('loaded');
+                    }, 300);
+                };
                 
-                this.loadedCount = 0;
-                this.createPortfolioItems();
-                
-                try {
-                    const loadPromises = CONFIG.imagePaths.map((path, index) => 
-                        this.loadSingleImage(path, index)
-                    );
+                img.onerror = () => {
+                    console.error(`图片加载失败: ${path}`);
                     
-                    await Promise.all(loadPromises);
-                    console.log('所有图片加载完成');
-                } catch (error) {
-                    console.error('部分图片加载失败:', error);
-                }
-            }
-        };
-
-        // 事件处理器
-        const eventHandlers = {
-            // 重试加载
-            handleRetry: () => {
-                utils.toggleNetworkError(false);
-                elements.portfolio.innerHTML = '';
+                    if (skeletonElement) {
+                        skeletonElement.textContent = '加载失败';
+                        skeletonElement.classList.add('error');
+                    }
+                };
                 
-                setTimeout(() => {
-                    imageLoader.loadAllImages();
-                }, 500);
-            },
+                img.src = path;
+            });
+        }
+        
+        // 显示网络错误
+        function showError(message) {
+            networkErrorElement.style.display = 'flex';
+        }
+        
+        // 隐藏网络错误
+        function hideError() {
+            networkErrorElement.style.display = 'none';
+        }
+        
+        // 重试按钮事件
+        retryBtn.addEventListener('click', () => {
+            hideError();
+            portfolioElement.innerHTML = '';
             
-            // 网络状态变化
-            handleOnline: () => {
-                console.log('网络连接恢复');
-                utils.toggleNetworkError(false);
-            },
-            
-            handleOffline: () => {
-                console.log('网络连接断开');
-                utils.toggleNetworkError(true);
-            }
-        };
-
-        // 初始化
-        const init = () => {
-            // 绑定事件
-            elements.retryBtn.addEventListener('click', eventHandlers.handleRetry);
-            window.addEventListener('online', eventHandlers.handleOnline);
-            window.addEventListener('offline', eventHandlers.handleOffline);
-            
-            // 检查网络状态并加载图片
+            // 延迟一下再开始加载，让用户看到变化
+            setTimeout(() => {
+                loadImagesInParallel();
+            }, 500);
+        });
+        
+        // 添加网络状态检测
+        window.addEventListener('online', () => {
+            console.log('网络连接恢复');
+            hideError();
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('网络连接断开');
+            showError('网络连接已断开，请检查网络设置');
+        });
+        
+        // 页面加载完成后开始加载图片
+        window.addEventListener('DOMContentLoaded', () => {
+            // 检查网络状态
             if (!navigator.onLine) {
-                utils.toggleNetworkError(true);
+                showError('网络连接已断开，请检查网络设置');
             } else {
-                imageLoader.loadAllImages();
+                // 直接加载图片
+                loadImagesInParallel();
             }
-        };
-
-        // 页面加载完成后初始化
-        window.addEventListener('DOMContentLoaded', init);
+        });
     </script>
 </body>
 </html>
