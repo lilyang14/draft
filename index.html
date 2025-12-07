@@ -1,179 +1,159 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>作品集</title>
-    <link rel="icon" type="image/x-icon" href="favicon_io/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
-    <link rel="manifest" href="favicon_io/site.webmanifest">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            background-color: #1C1C1C;
-            padding-top: 60px;
-            font-family: Arial, sans-serif;
-            color: #FFFFFF;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        @media (min-width: 768px) {
-            .container {
-                width: 65%;
-            }
-        }
-        
-        .gallery {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-        }
-        
-        .image-item {
-            width: 100%;
-            position: relative;
-        }
-        
-        .image-item img {
-            width: 100%;
-            height: auto;
-            display: block;
-            pointer-events: none;
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-        }
-        
-        .skeleton {
-            width: 100%;
-            height: 1080px;
-            background-color: rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .error-message {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 40px 20px;
-        }
-        
-        .error-message p {
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
-        
-        .reload-btn {
-            background-color: rgba(255, 255, 255, 0.2);
-            border: none;
-            width: 96px;
-            height: 36px;
-            color: #FFFFFF;
-            font-size: 14px;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        
-        .reload-btn:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>作品集</title>
+
+  <!-- favicon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
+  <link rel="manifest" href="favicon_io/site.webmanifest">
+  <meta name="theme-color" content="#1C1C1C">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background:#1C1C1C;
+      color:white;
+      font-family:-apple-system,PingFang SC,Helvetica,Arial;
+    }
+
+    .page { padding-top:60px; display:flex; justify-content:center; }
+    .gallery { width:100%; max-width:min(1200px,65vw); }
+
+    .gallery-item { width:100%; margin:0; position:relative; overflow:hidden; }
+    .gallery-item img {
+      width:100%; height:auto;
+      object-fit:fill;
+      user-select:none; pointer-events:none;
+    }
+
+    .skeleton{
+      width:100%; height:1080px;
+      background:rgba(255,255,255,0.20);
+    }
+
+    /* 网络异常 */
+    .offline-overlay{
+      position:fixed; inset:0;
+      display:none; justify-content:center; align-items:center;
+      background:rgba(0,0,0,0.6); z-index:9999;
+    }
+    .offline-sheet{ text-align:center; }
+    .offline-sheet p{ margin-bottom:20px; }
+
+    .reload-btn{
+      width:96px; height:36px;
+      font-size:14px; color:white;
+      background:rgba(255,255,255,0.2);
+      border:none; border-radius:4px;
+      cursor:pointer;
+    }
+
+    @media(max-width:800px){
+      .gallery{ max-width:100%; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="gallery" id="gallery">
-            <!-- 图片将通过JavaScript动态加载 -->
-        </div>
-        <div class="error-message" id="errorMessage">
-            <p>网络异常，请重新加载</p>
-            <button class="reload-btn" id="reloadBtn">重新加载</button>
-        </div>
-    </div>
+  <div class="page">
+    <main class="gallery" id="gallery"></main>
+  </div>
 
-    <script>
-        // 图片文件列表（按名称排序）
-        const imageFiles = [
-            'work1.png', 'work2.png', 'work3.png', 'work4.png',
-            'work5.png', 'work6.png', 'work7.png', 'work8.png'
-        ];
-        
-        const gallery = document.getElementById('gallery');
-        const errorMessage = document.getElementById('errorMessage');
-        const reloadBtn = document.getElementById('reloadBtn');
-        
-        // 创建图片元素
-        function createImageElements() {
-            imageFiles.forEach(filename => {
-                const imageItem = document.createElement('div');
-                imageItem.className = 'image-item';
-                
-                const skeleton = document.createElement('div');
-                skeleton.className = 'skeleton';
-                skeleton.id = `skeleton-${filename}`;
-                
-                const img = document.createElement('img');
-                img.src = `images/${filename}`;
-                img.alt = `作品 ${filename.replace('work', '').replace('.png', '')}`;
-                img.style.display = 'none';
-                img.onload = function() {
-                    document.getElementById(`skeleton-${filename}`).style.display = 'none';
-                    img.style.display = 'block';
-                };
-                img.onerror = function() {
-                    showError();
-                };
-                
-                // 防止右键菜单和拖拽
-                img.addEventListener('contextmenu', (e) => e.preventDefault());
-                img.setAttribute('draggable', 'false');
-                
-                imageItem.appendChild(skeleton);
-                imageItem.appendChild(img);
-                gallery.appendChild(imageItem);
-            });
-        }
-        
-        // 显示错误信息
-        function showError() {
-            gallery.style.display = 'none';
-            errorMessage.style.display = 'flex';
-        }
-        
-        // 重新加载图片
-        function reloadImages() {
-            gallery.style.display = 'flex';
-            errorMessage.style.display = 'none';
-            
-            // 重新创建图片元素
-            while (gallery.firstChild) {
-                gallery.removeChild(gallery.firstChild);
-            }
-            
-            createImageElements();
-        }
-        
-        // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            createImageElements();
-            reloadBtn.addEventListener('click', reloadImages);
-        });
-    </script>
+  <!-- 网络异常 -->
+  <div class="offline-overlay" id="offline">
+    <div class="offline-sheet">
+      <p>网络异常，请重新加载</p>
+      <button class="reload-btn" id="reloadBtn">重新加载</button>
+    </div>
+  </div>
+
+  <script>
+    window.scrollTo(0,0);
+
+    // 禁止右键保存
+    document.addEventListener("contextmenu", e => {
+      if (e.target.tagName === "IMG") e.preventDefault();
+    });
+
+    const offlineUI = document.getElementById("offline");
+    const reloadBtn = document.getElementById("reloadBtn");
+    reloadBtn.onclick = () => location.reload();
+
+    function checkNetwork(){
+      offlineUI.style.display = navigator.onLine ? "none" : "flex";
+    }
+    window.addEventListener("online",checkNetwork);
+    window.addEventListener("offline",checkNetwork);
+    checkNetwork();
+
+    /** 关键优化：并行检测 + 并行加载 **/
+    const gallery = document.getElementById("gallery");
+
+    async function checkExist(url){
+      try{
+        const res = await fetch(url, {method:"HEAD"});
+        return res.ok;
+      }catch(e){
+        return false;
+      }
+    }
+
+    async function loadAll(){
+      const tasks = [];
+      const maxCheck = 100; // 可自由扩容
+
+      // 并行检查 work1.png ~ work100.png
+      for(let i=1;i<=maxCheck;i++){
+        const url = `images/work${i}.png`;
+        tasks.push(checkExist(url).then(ok => ({i, ok, url})));
+      }
+
+      const results = await Promise.all(tasks);
+
+      // 过滤存在的图片，按序排列
+      const files = results.filter(r=>r.ok).sort((a,b)=>a.i-b.i);
+
+      if(files.length===0){
+        gallery.innerHTML = `<p style="color:#fff;padding:40px;text-align:center;">images 文件夹没有找到 workX.png</p>`;
+        return;
+      }
+
+      // 一次性渲染 skeleton
+      files.forEach(file=>{
+        const item = document.createElement("div");
+        item.className = "gallery-item";
+
+        const skeleton = document.createElement("div");
+        skeleton.className = "skeleton";
+
+        item.appendChild(skeleton);
+        gallery.appendChild(item);
+
+        // 图片并行加载
+        const img = new Image();
+        img.src = file.url;
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.draggable = false;
+
+        img.onload = () =>{
+          skeleton.replaceWith(img);
+        };
+        img.onerror = () =>{
+          skeleton.style.background = "rgba(255,0,0,0.2)";
+          skeleton.textContent = "加载失败";
+          skeleton.style.color="white";
+          skeleton.style.display="flex";
+          skeleton.style.alignItems="center";
+          skeleton.style.justifyContent="center";
+        };
+      });
+    }
+
+    loadAll();
+  </script>
 </body>
 </html>
