@@ -92,9 +92,10 @@
         const workContainer = document.getElementById('workContainer');
         const errorMessage = document.getElementById('errorMessage');
         let imageCount = 1;
-        const maxConsecutiveErrors = 1; // 连续1次加载失败就停止（删除图片后立即生效）
+        const maxConsecutiveErrors = 1; // 连续1次加载失败就停止（没有更多图片）
         let consecutiveErrors = 0;
         const imageLoadTimeout = 3000; // 图片加载超时时间：3秒
+        let hasLoadedAtLeastOneImage = false; // 标记是否已经加载到至少一张图片
 
         // 加载图片函数（添加防缓存参数）
         function loadImage() {
@@ -105,11 +106,15 @@
             
             const img = new Image();
             let timeoutTimer; // 超时计时器
+            let isTimeout = false; // 标记是否超时
 
             // 图片加载成功处理
             img.onload = () => {
                 clearTimeout(timeoutTimer); // 清除超时计时器
+                if (isTimeout) return; // 超时后加载成功也忽略
+                
                 consecutiveErrors = 0; // 重置连续错误计数
+                hasLoadedAtLeastOneImage = true; // 标记已加载到图片
                 img.classList.add('work-image');
                 workContainer.appendChild(img);
                 imageCount++;
@@ -119,38 +124,42 @@
             // 图片加载失败处理
             img.onerror = () => {
                 clearTimeout(timeoutTimer); // 清除超时计时器
+                if (isTimeout) return; // 超时后失败也忽略
+                
                 // 先尝试jpg格式
                 if (img.src.includes('.png')) {
                     img.src = jpgUrl; // 切换到jpg格式重试
                 } else {
                     // 两种格式都失败，累计错误次数
                     consecutiveErrors++;
+                    
+                    // 只有当还没加载到任何图片，且连续失败时，才显示网络异常
+                    if (!hasLoadedAtLeastOneImage && consecutiveErrors >= maxConsecutiveErrors) {
+                        errorMessage.style.display = 'block';
+                    }
+                    
+                    // 连续失败1次，停止加载（说明没有更多图片了）
                     if (consecutiveErrors >= maxConsecutiveErrors) {
-                        // 连续失败1次，停止加载（说明该序号图片已删除或不存在）
                         return;
                     }
+                    
                     imageCount++;
                     loadImage(); // 尝试下一张
                 }
             };
 
             // 图片加载超时处理
-            img.ontimeout = () => {
-                clearTimeout(timeoutTimer);
-                errorMessage.style.display = 'block';
-            };
-
-            // 监听网络错误
-            img.addEventListener('error', (e) => {
-                if (e.type === 'error' && !img.complete) {
+            function handleTimeout() {
+                isTimeout = true;
+                // 只有当还没加载到任何图片时，才显示网络异常
+                if (!hasLoadedAtLeastOneImage) {
                     errorMessage.style.display = 'block';
                 }
-            });
+                img.onerror(); // 超时视为加载失败
+            }
 
             // 设置加载超时
-            timeoutTimer = setTimeout(() => {
-                img.onerror(); // 超时视为加载失败
-            }, imageLoadTimeout);
+            timeoutTimer = setTimeout(handleTimeout, imageLoadTimeout);
 
             // 开始加载png格式
             img.src = pngUrl;
